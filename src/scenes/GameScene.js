@@ -15,59 +15,61 @@ export class GameScene extends Phaser.Scene {
     this.lives = GAME_SETTINGS.INITIAL_LIVES;
     this.level = 1;
     this.gameStarted = false;
-    
+
     // Создаем фон
     this.add.image(400, 300, 'background');
-    
+
     // Создаем границы
     this.createBounds();
-    
+
     // Создаем игровые объекты
     this.createGameObjects();
-    
+
     // Создаем блоки
     this.createBricks();
-    
+
     // Настраиваем физику столкновений
     this.setupCollisions();
-    
+
     // Настраиваем управление
     this.setupControls();
-    
+
     // Настраиваем события
     this.setupEvents();
-    
+
     // Обновляем UI
     this.updateUI();
   }
 
   createBounds() {
-    // Создаем невидимые границы для столкновений
+    // Создаем невидимые границы для столкновений (БЕЗ нижней стены)
     this.bounds = this.physics.add.staticGroup();
-    
+
     // Левая стена
     const leftWall = this.add.rectangle(5, 300, 10, 600, 0x444444);
     this.physics.add.existing(leftWall, true);
     this.bounds.add(leftWall);
-    
+
     // Правая стена
     const rightWall = this.add.rectangle(795, 300, 10, 600, 0x444444);
     this.physics.add.existing(rightWall, true);
     this.bounds.add(rightWall);
-    
+
     // Верхняя стена
     const topWall = this.add.rectangle(400, 5, 800, 10, 0x444444);
     this.physics.add.existing(topWall, true);
     this.bounds.add(topWall);
+
+    // НЕ создаем нижнюю стену - мяч должен улетать вниз!
   }
 
   createGameObjects() {
     // Создаем платформу
     this.paddle = new Paddle(this, 400, 550);
-    
+
     // Создаем мяч
     this.ball = new Ball(this, 400, 500);
-    
+
     // Позиционируем мяч на платформе
     this.resetBall();
   }
@@ -75,23 +77,23 @@ export class GameScene extends Phaser.Scene {
   createBricks() {
     // Создаем группу блоков
     this.bricks = this.physics.add.group();
-    
+
     // Параметры сетки блоков
     const startX = 50;
     const startY = GAME_SETTINGS.BRICK_OFFSET_TOP;
     const rows = GAME_SETTINGS.ROWS_OF_BRICKS;
     const cols = GAME_SETTINGS.BRICKS_PER_ROW;
-    
+
     // Создаем блоки
     const brickArray = Brick.createBrickGrid(
-      this, 
-      startX, 
-      startY, 
-      rows, 
-      cols, 
+      this,
+      startX,
+      startY,
+      rows,
+      cols,
       GAME_SETTINGS.BRICK_COLORS
     );
-    
+
     // Добавляем блоки в группу
     brickArray.forEach(brick => {
       this.bricks.add(brick);
@@ -104,20 +106,20 @@ export class GameScene extends Phaser.Scene {
       ball.bounceOffPaddle(paddle);
       paddle.onBallHit();
     });
-    
+
     // Столкновение мяча с блоками
     this.physics.add.collider(this.ball, this.bricks, (ball, brick) => {
       const destroyed = brick.hit();
       ball.bounceOffBrick();
-      
+
       if (destroyed) {
         this.score += brick.scoreValue;
         this.updateUI();
         this.checkWinCondition();
       }
     });
-    
-    // Столкновение мяча со стенами
+
+    // Столкновение мяча со стенами (только верхняя и боковые)
     this.physics.add.collider(this.ball, this.bounds, (ball, wall) => {
       ball.bounceOffWall();
     });
@@ -127,12 +129,12 @@ export class GameScene extends Phaser.Scene {
     // Управление клавишами
     this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
-    
+
     // Обработчики нажатий
     this.spaceKey.on('down', () => {
       this.handleSpaceKey();
     });
-    
+
     this.enterKey.on('down', () => {
       this.handleEnterKey();
     });
@@ -143,7 +145,7 @@ export class GameScene extends Phaser.Scene {
     this.events.on('ball-lost', () => {
       this.onBallLost();
     });
-    
+
     // Событие уничтожения блока
     this.events.on('brick-destroyed', (score) => {
       this.score += score;
@@ -167,10 +169,10 @@ export class GameScene extends Phaser.Scene {
 
   startGame() {
     if (this.gameStarted) return;
-    
+
     this.gameStarted = true;
     this.ball.launch();
-    
+
     // Показываем подсказку
     this.showMessage('Игра началась!', 1000);
   }
@@ -186,14 +188,18 @@ export class GameScene extends Phaser.Scene {
   }
 
   onBallLost() {
+    // Останавливаем игру
+    this.gameStarted = false;
+
+    // Отнимаем жизнь
     this.lives--;
     this.updateUI();
-    
+
     if (this.lives <= 0) {
       this.gameOver();
     } else {
+      // Сбрасываем мяч на платформу
       this.resetBall();
-      this.gameStarted = false;
       this.showMessage(`Жизнь потеряна! Осталось: ${this.lives}`, 2000);
     }
   }
@@ -212,7 +218,7 @@ export class GameScene extends Phaser.Scene {
   levelComplete() {
     this.level++;
     this.showMessage(`Уровень ${this.level - 1} пройден!`, 2000);
-    
+
     // Создаем новые блоки
     this.time.delayedCall(2000, () => {
       this.createBricks();
@@ -225,12 +231,12 @@ export class GameScene extends Phaser.Scene {
   gameOver() {
     this.gameStarted = false;
     this.showMessage('Игра окончена!', 3000);
-    
+
     // Переходим к экрану Game Over
     this.time.delayedCall(3000, () => {
-      this.scene.start('GameOverScene', { 
-        score: this.score, 
-        level: this.level 
+      this.scene.start('GameOverScene', {
+        score: this.score,
+        level: this.level
       });
     });
   }
@@ -240,7 +246,7 @@ export class GameScene extends Phaser.Scene {
     if (this.messageText) {
       this.messageText.destroy();
     }
-    
+
     // Создаем новое сообщение
     this.messageText = this.add.text(400, 300, text, {
       fontSize: '32px',
@@ -249,7 +255,7 @@ export class GameScene extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 4
     }).setOrigin(0.5);
-    
+
     // Анимация появления
     this.messageText.setAlpha(0);
     this.tweens.add({
@@ -258,7 +264,7 @@ export class GameScene extends Phaser.Scene {
       duration: 500,
       ease: 'Power2'
     });
-    
+
     // Удаляем сообщение через время
     this.time.delayedCall(duration, () => {
       if (this.messageText) {
@@ -290,14 +296,14 @@ export class GameScene extends Phaser.Scene {
     if (this.paddle) {
       this.paddle.update();
     }
-    
+
     if (this.ball) {
       this.ball.update();
     }
-    
+
     // Если мяч не запущен, следуем за платформой
     if (!this.gameStarted && this.ball && this.paddle) {
       this.ball.x = this.paddle.x;
     }
   }
-} 
+}
