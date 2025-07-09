@@ -3,6 +3,7 @@ import { GAME_SETTINGS } from '../config/gameConfig.js';
 import { Paddle } from '../objects/Paddle.js';
 import { Ball } from '../objects/Ball.js';
 import { Brick } from '../objects/Brick.js';
+import { LevelManager } from '../managers/LevelManager.js';
 
 export class GameScene extends Phaser.Scene {
   constructor() {
@@ -16,6 +17,9 @@ export class GameScene extends Phaser.Scene {
     this.level = 1;
     this.gameStarted = false;
     this.ballLostProcessing = false;
+
+    // Создаем менеджер уровней
+    this.levelManager = new LevelManager(this);
 
     // Создаем фон
     this.add.image(400, 300, 'background');
@@ -79,26 +83,32 @@ export class GameScene extends Phaser.Scene {
     // Создаем группу блоков
     this.bricks = this.physics.add.group();
 
-    // Параметры сетки блоков
-    const startX = 50;
-    const startY = GAME_SETTINGS.BRICK_OFFSET_TOP;
-    const rows = GAME_SETTINGS.ROWS_OF_BRICKS;
-    const cols = GAME_SETTINGS.BRICKS_PER_ROW;
+    // Загружаем текущий уровень
+    if (!this.levelManager.loadLevel(this.level)) {
+      console.error(`Не удалось загрузить уровень ${this.level}`);
+      return;
+    }
 
-    // Создаем блоки
-    const brickArray = Brick.createBrickGrid(
-      this,
-      startX,
-      startY,
-      rows,
-      cols,
-      GAME_SETTINGS.BRICK_COLORS
-    );
+    // Создаем блоки по паттерну уровня
+    const brickArray = this.levelManager.createBricks();
 
     // Добавляем блоки в группу
     brickArray.forEach(brick => {
       this.bricks.add(brick);
     });
+
+    // Показываем информацию об уровне
+    const levelInfo = this.levelManager.getCurrentLevelInfo();
+    if (levelInfo) {
+      this.showMessage(`${levelInfo.name}`, 2000);
+      console.log(`Уровень ${levelInfo.number}: ${levelInfo.name} - ${levelInfo.description}`);
+    }
+
+    // Применяем множитель скорости для уровня
+    const speedMultiplier = this.levelManager.getSpeedMultiplier();
+    if (this.ball) {
+      this.ball.speed = GAME_SETTINGS.BALL_SPEED * speedMultiplier;
+    }
   }
 
   setupCollisions() {
@@ -228,11 +238,17 @@ export class GameScene extends Phaser.Scene {
   }
 
   levelComplete() {
+    // Получаем бонус за завершение уровня
+    const levelBonus = this.levelManager.getLevelCompletionBonus();
+    this.score += levelBonus;
+
+    const levelInfo = this.levelManager.getCurrentLevelInfo();
+    this.showMessage(`${levelInfo.name} пройден! Бонус: ${levelBonus}`, 3000);
+
     this.level++;
-    this.showMessage(`Уровень ${this.level - 1} пройден!`, 2000);
 
     // Создаем новые блоки
-    this.time.delayedCall(2000, () => {
+    this.time.delayedCall(3000, () => {
       this.createBricks();
       this.resetBall();
       this.gameStarted = false;
