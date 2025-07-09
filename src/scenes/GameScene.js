@@ -243,14 +243,45 @@ export class GameScene extends Phaser.Scene {
 
   gameOver() {
     this.gameStarted = false;
-    this.showMessage('Игра окончена!', 3000);
+    this.showMessage('Игра окончена!', 2000);
 
-    // Переходим к экрану Game Over
-    this.time.delayedCall(3000, () => {
-      this.scene.start('GameOverScene', {
-        score: this.score,
-        level: this.level
-      });
+    // После показа сообщения делаем фейд и переходим в главное меню
+    this.time.delayedCall(2000, () => {
+      this.fadeToMenu();
+    });
+  }
+
+  // Плавный переход в главное меню с фейдом
+  fadeToMenu() {
+    // Создаем черный прямоугольник для фейда
+    const fadeOverlay = this.add.rectangle(
+      this.cameras.main.centerX,
+      this.cameras.main.centerY,
+      this.cameras.main.width,
+      this.cameras.main.height,
+      0x000000,
+      0
+    );
+
+    // Устанавливаем высокий z-index для overlay
+    fadeOverlay.setDepth(1000);
+
+    // Анимация появления черного экрана
+    this.tweens.add({
+      targets: fadeOverlay,
+      alpha: 1,
+      duration: 1000,
+      ease: 'Power2',
+      onComplete: () => {
+        // Уведомляем главное приложение о завершении игры
+        this.game.events.emit('game-over');
+
+        // Переходим в главное меню с флагом fromGame
+        this.scene.start('MenuScene', { fromGame: true });
+
+        // Удаляем overlay
+        fadeOverlay.destroy();
+      }
     });
   }
 

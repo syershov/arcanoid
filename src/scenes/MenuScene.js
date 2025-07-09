@@ -18,6 +18,11 @@ export class MenuScene extends Phaser.Scene {
       strokeThickness: 4
     }).setOrigin(0.5);
 
+    // Добавляем фейд-ин эффект при входе в меню (только если пришли из игры)
+    if (this.scene.settings.data && this.scene.settings.data.fromGame) {
+      this.createFadeInEffect();
+    }
+
     // Добавляем подзаголовок
     this.add.text(400, 280, 'Классическая аркадная игра', {
       fontSize: '24px',
@@ -48,23 +53,23 @@ export class MenuScene extends Phaser.Scene {
   createAnimatedElements() {
     // Создаем несколько анимированных блоков для украшения
     const colors = [0xff6b6b, 0x4ecdc4, 0x45b7d1, 0x96ceb4, 0xfeca57];
-    
+
     // Сохраняем ссылки на анимированные элементы для очистки
     this.animatedElements = [];
     this.animatedTweens = [];
-    
+
     for (let i = 0; i < 5; i++) {
       const brick = this.add.rectangle(
-        100 + i * 120, 
-        100, 
-        75, 
-        30, 
+        100 + i * 120,
+        100,
+        75,
+        30,
         colors[i]
       );
-      
+
       brick.setStrokeStyle(2, 0xffffff);
       this.animatedElements.push(brick);
-      
+
       // Добавляем пульсацию
       const tween = this.tweens.add({
         targets: brick,
@@ -81,7 +86,7 @@ export class MenuScene extends Phaser.Scene {
     // Создаем анимированный мяч
     const ball = this.add.circle(50, 500, 8, 0xffffff);
     this.animatedElements.push(ball);
-    
+
     const ballTween = this.tweens.add({
       targets: ball,
       x: 750,
@@ -95,7 +100,7 @@ export class MenuScene extends Phaser.Scene {
     // Создаем анимированную платформу
     const paddle = this.add.rectangle(400, 520, 100, 20, 0x00ff00);
     this.animatedElements.push(paddle);
-    
+
     const paddleTween = this.tweens.add({
       targets: paddle,
       x: 300,
@@ -119,7 +124,7 @@ export class MenuScene extends Phaser.Scene {
       });
       this.animatedTweens = [];
     }
-    
+
     // Удаляем анимированные элементы
     if (this.animatedElements) {
       this.animatedElements.forEach(element => {
@@ -129,8 +134,35 @@ export class MenuScene extends Phaser.Scene {
       });
       this.animatedElements = [];
     }
-    
+
     // Вызываем родительский метод
     super.shutdown();
   }
-} 
+
+  // Создание эффекта fade-in при входе в меню
+  createFadeInEffect() {
+    // Создаем черный overlay для fade-in
+    const fadeOverlay = this.add.rectangle(
+      400,
+      300,
+      800,
+      600,
+      0x000000,
+      1
+    );
+
+    // Устанавливаем высокий z-index
+    fadeOverlay.setDepth(1000);
+
+    // Анимация исчезновения черного экрана
+    this.tweens.add({
+      targets: fadeOverlay,
+      alpha: 0,
+      duration: 1000,
+      ease: 'Power2',
+      onComplete: () => {
+        fadeOverlay.destroy();
+      }
+    });
+  }
+}
