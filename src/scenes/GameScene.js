@@ -15,6 +15,7 @@ export class GameScene extends Phaser.Scene {
     this.lives = GAME_SETTINGS.INITIAL_LIVES;
     this.level = 1;
     this.gameStarted = false;
+    this.ballLostProcessing = false;
 
     // Создаем фон
     this.add.image(400, 300, 'background');
@@ -188,6 +189,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   onBallLost() {
+    // Защита от повторных вызовов
+    if (this.ballLostProcessing) {
+      return;
+    }
+    this.ballLostProcessing = true;
+
     // Останавливаем игру
     this.gameStarted = false;
 
@@ -202,6 +209,11 @@ export class GameScene extends Phaser.Scene {
       this.resetBall();
       this.showMessage(`Жизнь потеряна! Осталось: ${this.lives}`, 2000);
     }
+
+    // Сбрасываем флаг через небольшую задержку
+    this.time.delayedCall(500, () => {
+      this.ballLostProcessing = false;
+    });
   }
 
   resetBall() {
@@ -224,6 +236,7 @@ export class GameScene extends Phaser.Scene {
       this.createBricks();
       this.resetBall();
       this.gameStarted = false;
+      this.ballLostProcessing = false; // Сбрасываем флаг
       this.updateUI();
     });
   }

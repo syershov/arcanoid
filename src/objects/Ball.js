@@ -16,6 +16,7 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
 
     // Состояние мяча
     this.isLaunched = false;
+    this.isLost = false;
     this.speed = GAME_SETTINGS.BALL_SPEED;
 
     // Эффекты
@@ -57,10 +58,12 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
   // Сброс мяча
   reset(x, y) {
     this.isLaunched = false;
+    this.isLost = false; // Сбрасываем флаг потери
     this.setPosition(x, y);
     this.setVelocity(0, 0);
     this.clearTint();
     this.setScale(1);
+    this.setAlpha(1); // Восстанавливаем прозрачность
   }
 
   // Обновление мяча
@@ -121,7 +124,8 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
   // Проверка границ
   checkBounds() {
     // Проверяем, не упал ли мяч вниз (потеря жизни)
-    if (this.y > this.scene.sys.game.config.height + 20) {
+    // Проверяем только если мяч еще не потерян
+    if (!this.isLost && this.y > this.scene.sys.game.config.height + 20) {
       this.onBallLost();
       return;
     }
@@ -194,6 +198,12 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
 
   // Обработка потери мяча
   onBallLost() {
+    // Защита от повторных вызовов
+    if (this.isLost) {
+      return;
+    }
+    this.isLost = true;
+
     // Останавливаем мяч
     this.setVelocity(0, 0);
     this.isLaunched = false;
@@ -211,7 +221,7 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
         this.setAlpha(1);
         this.setScale(1);
 
-        // Эмитим событие потери мяча
+        // Эмитим событие потери мяча ТОЛЬКО ОДИН РАЗ
         this.scene.events.emit('ball-lost');
       }
     });
