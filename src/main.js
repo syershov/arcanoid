@@ -93,7 +93,10 @@ class ArcanoidApp {
     // Показываем UI игры
     this.elements.uiOverlay.classList.remove('hidden');
     
-    // Запускаем игровую сцену
+    // Останавливаем сцену меню и запускаем игровую сцену
+    if (this.game.scene.getScene('MenuScene')) {
+      this.game.scene.stop('MenuScene');
+    }
     if (this.game.scene.getScene('GameScene')) {
       this.game.scene.start('GameScene');
     }
@@ -102,6 +105,11 @@ class ArcanoidApp {
   resumeGame() {
     this.gameState.isPaused = false;
     this.hideMenu();
+    
+    // Останавливаем сцену меню
+    if (this.game.scene.getScene('MenuScene')) {
+      this.game.scene.stop('MenuScene');
+    }
     
     // Возобновляем игровую сцену
     if (this.game.scene.getScene('GameScene')) {
@@ -121,7 +129,6 @@ class ArcanoidApp {
 
   pauseGame() {
     this.gameState.isPaused = true;
-    this.showMenu();
     this.elements.startButton.style.display = 'none';
     this.elements.resumeButton.style.display = 'block';
     
@@ -129,6 +136,13 @@ class ArcanoidApp {
     if (this.game.scene.getScene('GameScene')) {
       this.game.scene.pause('GameScene');
     }
+    
+    // Запускаем сцену меню поверх игры
+    if (this.game.scene.getScene('MenuScene')) {
+      this.game.scene.launch('MenuScene');
+    }
+    
+    this.showMenu();
   }
 
   showMenu() {
@@ -169,6 +183,14 @@ class ArcanoidApp {
     // Возвращаем кнопки в исходное состояние
     this.elements.startButton.style.display = 'block';
     this.elements.resumeButton.style.display = 'none';
+    
+    // Скрываем UI игры
+    this.elements.uiOverlay.classList.add('hidden');
+    
+    // Перезапускаем сцену меню
+    if (this.game.scene.getScene('MenuScene')) {
+      this.game.scene.start('MenuScene');
+    }
     
     // Показываем меню
     this.showMenu();

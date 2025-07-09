@@ -49,6 +49,10 @@ export class MenuScene extends Phaser.Scene {
     // Создаем несколько анимированных блоков для украшения
     const colors = [0xff6b6b, 0x4ecdc4, 0x45b7d1, 0x96ceb4, 0xfeca57];
     
+    // Сохраняем ссылки на анимированные элементы для очистки
+    this.animatedElements = [];
+    this.animatedTweens = [];
+    
     for (let i = 0; i < 5; i++) {
       const brick = this.add.rectangle(
         100 + i * 120, 
@@ -59,9 +63,10 @@ export class MenuScene extends Phaser.Scene {
       );
       
       brick.setStrokeStyle(2, 0xffffff);
+      this.animatedElements.push(brick);
       
       // Добавляем пульсацию
-      this.tweens.add({
+      const tween = this.tweens.add({
         targets: brick,
         scaleX: 1.1,
         scaleY: 1.1,
@@ -70,12 +75,14 @@ export class MenuScene extends Phaser.Scene {
         repeat: -1,
         ease: 'Sine.easeInOut'
       });
+      this.animatedTweens.push(tween);
     }
 
     // Создаем анимированный мяч
     const ball = this.add.circle(50, 500, 8, 0xffffff);
+    this.animatedElements.push(ball);
     
-    this.tweens.add({
+    const ballTween = this.tweens.add({
       targets: ball,
       x: 750,
       duration: 3000,
@@ -83,11 +90,13 @@ export class MenuScene extends Phaser.Scene {
       repeat: -1,
       ease: 'Sine.easeInOut'
     });
+    this.animatedTweens.push(ballTween);
 
     // Создаем анимированную платформу
     const paddle = this.add.rectangle(400, 520, 100, 20, 0x00ff00);
+    this.animatedElements.push(paddle);
     
-    this.tweens.add({
+    const paddleTween = this.tweens.add({
       targets: paddle,
       x: 300,
       duration: 2000,
@@ -95,5 +104,33 @@ export class MenuScene extends Phaser.Scene {
       repeat: -1,
       ease: 'Sine.easeInOut'
     });
+    this.animatedTweens.push(paddleTween);
+  }
+
+  // Очистка анимированных элементов при выходе из сцены
+  shutdown() {
+    // Останавливаем все анимации
+    if (this.animatedTweens) {
+      this.animatedTweens.forEach(tween => {
+        if (tween) {
+          tween.stop();
+          tween.destroy();
+        }
+      });
+      this.animatedTweens = [];
+    }
+    
+    // Удаляем анимированные элементы
+    if (this.animatedElements) {
+      this.animatedElements.forEach(element => {
+        if (element) {
+          element.destroy();
+        }
+      });
+      this.animatedElements = [];
+    }
+    
+    // Вызываем родительский метод
+    super.shutdown();
   }
 } 
