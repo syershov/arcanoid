@@ -276,11 +276,9 @@ export class GameScene extends Phaser.Scene {
         // Уведомляем главное приложение о завершении игры
         this.game.events.emit('game-over');
 
-        // Переходим в главное меню с флагом fromGame
+        // Останавливаем текущую сцену и запускаем главное меню
+        this.scene.stop('GameScene');
         this.scene.start('MenuScene', { fromGame: true });
-
-        // Удаляем overlay
-        fadeOverlay.destroy();
       }
     });
   }
@@ -349,5 +347,26 @@ export class GameScene extends Phaser.Scene {
     if (!this.gameStarted && this.ball && this.paddle) {
       this.ball.x = this.paddle.x;
     }
+  }
+
+  // Очистка ресурсов при завершении сцены
+  shutdown() {
+    // Останавливаем все таймеры
+    this.time.removeAllEvents();
+
+    // Останавливаем все анимации
+    this.tweens.killAll();
+
+    // Очищаем группы объектов
+    if (this.bricks) {
+      this.bricks.clear(true, true);
+    }
+
+    // Сбрасываем флаги
+    this.gameStarted = false;
+    this.ballLostProcessing = false;
+
+    // Вызываем родительский метод
+    super.shutdown();
   }
 }
