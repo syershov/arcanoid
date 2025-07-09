@@ -1,0 +1,89 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🎮 Запуск Arcanoid (Dev)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/vite",
+      "args": ["--host", "localhost", "--port", "3000"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "presentation": {
+        "group": "🎮 Arcanoid",
+        "order": 1
+      }
+    },
+    {
+      "name": "🚀 Сборка проекта",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/vite",
+      "args": ["build"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "env": {
+        "NODE_ENV": "production"
+      },
+      "presentation": {
+        "group": "🎮 Arcanoid",
+        "order": 2
+      }
+    },
+    {
+      "name": "👀 Предпросмотр сборки",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/vite",
+      "args": ["preview", "--port", "3000"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "env": {
+        "NODE_ENV": "production"
+      },
+      "presentation": {
+        "group": "🎮 Arcanoid",
+        "order": 3
+      }
+    },
+    {
+      "name": "🐛 Отладка в Chrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      "userDataDir": "${workspaceFolder}/.vscode/chrome-debug-profile",
+      "runtimeArgs": [
+        "--disable-web-security",
+        "--disable-features=VizDisplayCompositor",
+        "--allow-running-insecure-content"
+      ],
+      "presentation": {
+        "group": "🎮 Arcanoid",
+        "order": 4
+      },
+      "preLaunchTask": "npm: dev"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "🎮 Запуск + Отладка",
+      "configurations": [
+        "🎮 Запуск Arcanoid (Dev)",
+        "🐛 Отладка в Chrome"
+      ],
+      "presentation": {
+        "group": "🎮 Arcanoid",
+        "order": 0
+      },
+      "stopAll": true
+    }
+  ]
+} 

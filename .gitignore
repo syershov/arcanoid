@@ -10,11 +10,13 @@ build/
 out/
 
 # Среды разработки
-.vscode/
 .idea/
 *.swp
 *.swo
 *~
+
+# VS Code - исключаем профиль отладки Chrome, но оставляем конфигурацию
+.vscode/chrome-debug-profile/
 
 # Операционные системы
 .DS_Store
@@ -64,4 +66,4 @@ assets/raw/
 *.exe
 
 # Memory Bank (если содержит чувствительные данные)
-memory_bank/sensitive/ 
+memory_bank/sensitive/
