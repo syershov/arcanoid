@@ -111,7 +111,7 @@ export class GameScene extends Phaser.Scene {
     // Столкновение мяча с блоками
     this.physics.add.collider(this.ball, this.bricks, (ball, brick) => {
       const destroyed = brick.hit();
-      ball.bounceOffBrick();
+      ball.bounceOffBrick(brick);
 
       if (destroyed) {
         this.score += brick.scoreValue;

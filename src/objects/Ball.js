@@ -115,9 +115,16 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
       this.setVelocity(normalizedVelocity.x, normalizedVelocity.y);
     }
 
-    // Предотвращаем горизонтальное движение
+    // Предотвращаем строго горизонтальное движение
     if (Math.abs(velocity.y) < 50) {
       this.setVelocityY(velocity.y > 0 ? 50 : -50);
+    }
+
+    // Предотвращаем строго вертикальное движение
+    if (Math.abs(velocity.x) < 30) {
+      // Добавляем небольшую горизонтальную скорость в случайном направлении
+      const randomDirection = Math.random() > 0.5 ? 1 : -1;
+      this.setVelocityX(randomDirection * 30);
     }
   }
 
@@ -174,17 +181,75 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
   }
 
   // Отскок от блока
-  bounceOffBrick() {
+  bounceOffBrick(brick) {
     // Эффект отскока
     this.setTint(0xff0000);
     this.scene.time.delayedCall(100, () => {
       this.clearTint();
     });
 
-    // Небольшое увеличение скорости
+    // Получаем текущую скорость
     const currentVelocity = this.body.velocity;
-    const speedMultiplier = 1.02;
-    this.setVelocity(currentVelocity.x * speedMultiplier, currentVelocity.y * speedMultiplier);
+    let newVelocityX = currentVelocity.x;
+    let newVelocityY = currentVelocity.y;
+
+    if (brick) {
+      // Вычисляем относительную позицию попадания
+      const ballCenterX = this.x;
+      const ballCenterY = this.y;
+      const brickCenterX = brick.x;
+      const brickCenterY = brick.y;
+
+      // Определяем сторону столкновения
+      const deltaX = ballCenterX - brickCenterX;
+      const deltaY = ballCenterY - brickCenterY;
+
+      // Размеры блока (приблизительные)
+      const brickWidth = brick.width || 75;
+      const brickHeight = brick.height || 30;
+
+      // Определяем, с какой стороны произошло столкновение
+      const overlapX = Math.abs(deltaX) - brickWidth / 2;
+      const overlapY = Math.abs(deltaY) - brickHeight / 2;
+
+      if (overlapX > overlapY) {
+        // Столкновение с боковой стороной блока
+        newVelocityX = -currentVelocity.x;
+
+        // Добавляем небольшую случайность по Y для избежания зацикливания
+        const randomAngle = (Math.random() - 0.5) * 0.3; // ±0.15 радиан (±8.6 градусов)
+        newVelocityY = currentVelocity.y + Math.sin(randomAngle) * this.speed * 0.2;
+      } else {
+        // Столкновение с верхней или нижней стороной блока
+        newVelocityY = -currentVelocity.y;
+
+        // Добавляем случайность по X в зависимости от точки попадания
+        const hitPosition = deltaX / (brickWidth / 2); // от -1 до 1
+        const angleModification = hitPosition * 0.5; // максимум ±0.5 радиан (±28.6 градусов)
+
+        // Добавляем небольшую случайность
+        const randomFactor = (Math.random() - 0.5) * 0.2; // ±0.1 радиан
+        const totalAngle = angleModification + randomFactor;
+
+        newVelocityX = currentVelocity.x + Math.sin(totalAngle) * this.speed * 0.3;
+      }
+    }
+
+    // Предотвращаем строго вертикальное движение
+    if (Math.abs(newVelocityX) < 30) {
+      newVelocityX = newVelocityX >= 0 ? 30 : -30;
+    }
+
+    // Предотвращаем строго горизонтальное движение
+    if (Math.abs(newVelocityY) < 30) {
+      newVelocityY = newVelocityY >= 0 ? 30 : -30;
+    }
+
+    // Нормализуем скорость
+    const newSpeed = Math.sqrt(newVelocityX * newVelocityX + newVelocityY * newVelocityY);
+    const speedMultiplier = (this.speed * 1.02) / newSpeed; // Небольшое увеличение скорости
+
+    this.setVelocity(newVelocityX * speedMultiplier, newVelocityY * speedMultiplier);
   }
 
   // Отскок от стены
