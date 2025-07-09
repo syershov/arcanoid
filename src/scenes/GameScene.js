@@ -273,14 +273,49 @@ export class GameScene extends Phaser.Scene {
       duration: 1000,
       ease: 'Power2',
       onComplete: () => {
-        // Останавливаем текущую сцену и запускаем главное меню
-        this.scene.stop('GameScene');
-        this.scene.start('MenuScene', { fromGame: true });
+        // Принудительно очищаем всё перед переходом
+        this.forceCleanup();
 
-        // Уведомляем главное приложение о завершении игры (после перехода)
+        // Уведомляем главное приложение о завершении игры
         this.game.events.emit('game-over');
+
+        // Полностью перезапускаем игру через специальное событие
+        this.game.events.emit('restart-to-menu');
       }
     });
+  }
+
+  // Принудительная очистка всех ресурсов
+  forceCleanup() {
+    // Останавливаем все таймеры
+    if (this.time) {
+      this.time.removeAllEvents();
+    }
+
+    // Останавливаем все анимации
+    if (this.tweens) {
+      this.tweens.killAll();
+    }
+
+    // Очищаем физический мир
+    if (this.physics && this.physics.world) {
+      this.physics.world.removeAllListeners();
+    }
+
+    // Принудительно удаляем все объекты
+    if (this.children) {
+      this.children.removeAll(true);
+    }
+
+    // Очищаем кэш объектов
+    this.paddle = null;
+    this.ball = null;
+    this.bricks = null;
+    this.messageText = null;
+
+    // Сбрасываем состояние
+    this.gameStarted = false;
+    this.ballLostProcessing = false;
   }
 
   showMessage(text, duration = 2000) {

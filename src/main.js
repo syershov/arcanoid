@@ -73,6 +73,10 @@ class ArcanoidApp {
     this.game.events.on('game-over', () => {
       this.onGameOver();
     });
+
+    this.game.events.on('restart-to-menu', () => {
+      this.restartToMenu();
+    });
   }
 
   onGameReady() {
@@ -189,6 +193,17 @@ class ArcanoidApp {
 
     // Показываем меню (сцена уже переключена в GameScene)
     this.showMenu();
+  }
+
+  restartToMenu() {
+    // Полностью останавливаем все сцены
+    this.game.scene.stop();
+
+    // Небольшая задержка для полной очистки
+    setTimeout(() => {
+      // Перезапускаем только MenuScene
+      this.game.scene.start('MenuScene', { fromGame: true });
+    }, 100);
   }
 
   // Метод для получения состояния игры (для использования в сценах)
