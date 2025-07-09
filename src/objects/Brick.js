@@ -15,9 +15,10 @@ export class Brick extends Phaser.Physics.Arcade.Sprite {
 
     // Свойства блока
     this.maxHits = hits;
-    this.currentHits = hits;
+    this.currentHits = 0; // Исправлено: начинаем с 0 попаданий
     this.baseColor = color;
     this.scoreValue = GAME_SETTINGS.BRICK_SCORE * hits;
+    this.isBeingDestroyed = false; // Флаг для предотвращения двойной обработки
 
     // Устанавливаем цвет
     this.setTint(color);

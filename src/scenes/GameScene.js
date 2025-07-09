@@ -17,6 +17,7 @@ export class GameScene extends Phaser.Scene {
     this.level = 1;
     this.gameStarted = false;
     this.ballLostProcessing = false;
+    this.levelCompleteProcessing = false; // Защита от двойного завершения уровня
 
     // Создаем менеджер уровней
     this.levelManager = new LevelManager(this);
@@ -120,6 +121,14 @@ export class GameScene extends Phaser.Scene {
 
     // Столкновение мяча с блоками
     this.physics.add.collider(this.ball, this.bricks, (ball, brick) => {
+      // Проверяем, что блок еще существует и не обрабатывается
+      if (!brick.active || brick.isBeingDestroyed) {
+        return;
+      }
+
+      // Помечаем блок как обрабатываемый
+      brick.isBeingDestroyed = true;
+
       const destroyed = brick.hit();
       ball.bounceOffBrick(brick);
 
@@ -127,6 +136,9 @@ export class GameScene extends Phaser.Scene {
         this.score += brick.scoreValue;
         this.updateUI();
         this.checkWinCondition();
+      } else {
+        // Если блок не разрушен, снимаем флаг
+        brick.isBeingDestroyed = false;
       }
     });
 
@@ -232,9 +244,22 @@ export class GameScene extends Phaser.Scene {
   }
 
   checkWinCondition() {
-    if (this.bricks.children.entries.length === 0) {
-      this.levelComplete();
+    // Защита от множественных вызовов
+    if (this.levelCompleteProcessing) {
+      return;
     }
+
+    // Проверяем с небольшой задержкой, чтобы все блоки успели обновиться
+    this.time.delayedCall(10, () => {
+      if (this.levelCompleteProcessing || !this.bricks) {
+        return;
+      }
+
+      if (this.bricks.children.entries.length === 0) {
+        this.levelCompleteProcessing = true;
+        this.levelComplete();
+      }
+    });
   }
 
   levelComplete() {
@@ -253,6 +278,7 @@ export class GameScene extends Phaser.Scene {
       this.resetBall();
       this.gameStarted = false;
       this.ballLostProcessing = false; // Сбрасываем флаг
+      this.levelCompleteProcessing = false; // Сбрасываем флаг завершения уровня
       this.updateUI();
     });
   }
@@ -435,6 +461,7 @@ export class GameScene extends Phaser.Scene {
     // Сбрасываем флаги
     this.gameStarted = false;
     this.ballLostProcessing = false;
+    this.levelCompleteProcessing = false;
 
     // Очищаем все объекты сцены
     this.children.removeAll(true);
