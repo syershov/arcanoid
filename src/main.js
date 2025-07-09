@@ -11,7 +11,7 @@ class ArcanoidApp {
       isGameStarted: false,
       isPaused: false
     };
-    
+
     this.initializeUI();
     this.createGame();
   }
@@ -48,10 +48,10 @@ class ArcanoidApp {
   createGame() {
     // Показываем загрузку
     this.elements.loading.classList.remove('hidden');
-    
+
     // Создаем игру Phaser
     this.game = new Phaser.Game(GAME_CONFIG);
-    
+
     // Настраиваем события игры
     this.game.events.on('ready', () => {
       this.onGameReady();
@@ -78,7 +78,7 @@ class ArcanoidApp {
   onGameReady() {
     // Скрываем загрузку
     this.elements.loading.classList.add('hidden');
-    
+
     // Показываем меню
     this.showMenu();
   }
@@ -86,13 +86,13 @@ class ArcanoidApp {
   startGame() {
     this.gameState.isGameStarted = true;
     this.gameState.isPaused = false;
-    
+
     // Скрываем меню
     this.hideMenu();
-    
+
     // Показываем UI игры
     this.elements.uiOverlay.classList.remove('hidden');
-    
+
     // Останавливаем сцену меню и запускаем игровую сцену
     if (this.game.scene.getScene('MenuScene')) {
       this.game.scene.stop('MenuScene');
@@ -105,12 +105,12 @@ class ArcanoidApp {
   resumeGame() {
     this.gameState.isPaused = false;
     this.hideMenu();
-    
+
     // Останавливаем сцену меню
     if (this.game.scene.getScene('MenuScene')) {
       this.game.scene.stop('MenuScene');
     }
-    
+
     // Возобновляем игровую сцену
     if (this.game.scene.getScene('GameScene')) {
       this.game.scene.resume('GameScene');
@@ -131,17 +131,17 @@ class ArcanoidApp {
     this.gameState.isPaused = true;
     this.elements.startButton.style.display = 'none';
     this.elements.resumeButton.style.display = 'block';
-    
+
     // Приостанавливаем игровую сцену
     if (this.game.scene.getScene('GameScene')) {
       this.game.scene.pause('GameScene');
     }
-    
+
     // Запускаем сцену меню поверх игры
     if (this.game.scene.getScene('MenuScene')) {
       this.game.scene.launch('MenuScene');
     }
-    
+
     this.showMenu();
   }
 
@@ -179,20 +179,15 @@ class ArcanoidApp {
   onGameOver() {
     this.gameState.isGameStarted = false;
     this.gameState.isPaused = false;
-    
+
     // Возвращаем кнопки в исходное состояние
     this.elements.startButton.style.display = 'block';
     this.elements.resumeButton.style.display = 'none';
-    
+
     // Скрываем UI игры
     this.elements.uiOverlay.classList.add('hidden');
-    
-    // Перезапускаем сцену меню
-    if (this.game.scene.getScene('MenuScene')) {
-      this.game.scene.start('MenuScene');
-    }
-    
-    // Показываем меню
+
+    // Показываем меню (сцена уже переключена в GameScene)
     this.showMenu();
   }
 
@@ -206,4 +201,4 @@ class ArcanoidApp {
 window.arcanoidApp = new ArcanoidApp();
 
 // Экспортируем для использования в модулях
-export default window.arcanoidApp; 
+export default window.arcanoidApp;

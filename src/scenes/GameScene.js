@@ -273,12 +273,12 @@ export class GameScene extends Phaser.Scene {
       duration: 1000,
       ease: 'Power2',
       onComplete: () => {
-        // Уведомляем главное приложение о завершении игры
-        this.game.events.emit('game-over');
-
         // Останавливаем текущую сцену и запускаем главное меню
         this.scene.stop('GameScene');
         this.scene.start('MenuScene', { fromGame: true });
+
+        // Уведомляем главное приложение о завершении игры (после перехода)
+        this.game.events.emit('game-over');
       }
     });
   }
@@ -360,11 +360,33 @@ export class GameScene extends Phaser.Scene {
     // Очищаем группы объектов
     if (this.bricks) {
       this.bricks.clear(true, true);
+      this.bricks.destroy();
+      this.bricks = null;
+    }
+
+    // Удаляем игровые объекты
+    if (this.paddle) {
+      this.paddle.destroy();
+      this.paddle = null;
+    }
+
+    if (this.ball) {
+      this.ball.destroy();
+      this.ball = null;
+    }
+
+    // Удаляем UI элементы
+    if (this.messageText) {
+      this.messageText.destroy();
+      this.messageText = null;
     }
 
     // Сбрасываем флаги
     this.gameStarted = false;
     this.ballLostProcessing = false;
+
+    // Очищаем все объекты сцены
+    this.children.removeAll(true);
 
     // Вызываем родительский метод
     super.shutdown();
