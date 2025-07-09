@@ -215,41 +215,55 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
       if (overlapX > overlapY) {
         // Столкновение с боковой стороной блока
         newVelocityX = -currentVelocity.x;
+        newVelocityY = currentVelocity.y;
 
         // Добавляем небольшую случайность по Y для избежания зацикливания
-        const randomAngle = (Math.random() - 0.5) * 0.3; // ±0.15 радиан (±8.6 градусов)
-        newVelocityY = currentVelocity.y + Math.sin(randomAngle) * this.speed * 0.2;
+        const randomAngle = (Math.random() - 0.5) * 0.2; // ±0.1 радиан (±5.7 градусов)
+        newVelocityY = currentVelocity.y + Math.sin(randomAngle) * this.speed * 0.1;
       } else {
         // Столкновение с верхней или нижней стороной блока
         newVelocityY = -currentVelocity.y;
 
         // Добавляем случайность по X в зависимости от точки попадания
         const hitPosition = deltaX / (brickWidth / 2); // от -1 до 1
-        const angleModification = hitPosition * 0.5; // максимум ±0.5 радиан (±28.6 градусов)
+        let angleModification = hitPosition * 0.4; // максимум ±0.4 радиан (±22.9 градусов)
 
         // Добавляем небольшую случайность
-        const randomFactor = (Math.random() - 0.5) * 0.2; // ±0.1 радиан
-        const totalAngle = angleModification + randomFactor;
+        const randomFactor = (Math.random() - 0.5) * 0.15; // ±0.075 радиан
+        angleModification += randomFactor;
 
-        newVelocityX = currentVelocity.x + Math.sin(totalAngle) * this.speed * 0.3;
+        newVelocityX = currentVelocity.x + Math.sin(angleModification) * this.speed * 0.25;
       }
-    }
-
-    // Предотвращаем строго вертикальное движение
-    if (Math.abs(newVelocityX) < 30) {
-      newVelocityX = newVelocityX >= 0 ? 30 : -30;
-    }
-
-    // Предотвращаем строго горизонтальное движение
-    if (Math.abs(newVelocityY) < 30) {
-      newVelocityY = newVelocityY >= 0 ? 30 : -30;
     }
 
     // Нормализуем скорость
     const newSpeed = Math.sqrt(newVelocityX * newVelocityX + newVelocityY * newVelocityY);
-    const speedMultiplier = (this.speed * 1.02) / newSpeed; // Небольшое увеличение скорости
 
-    this.setVelocity(newVelocityX * speedMultiplier, newVelocityY * speedMultiplier);
+    // Ограничиваем угол отскока до 60 градусов (≈1.047 радиан)
+    const maxAngle = Math.PI / 3; // 60 градусов
+    const minAngle = Math.PI / 6; // 30 градусов для минимального угла
+
+    // Вычисляем текущий угол
+    let currentAngle = Math.atan2(Math.abs(newVelocityX), Math.abs(newVelocityY));
+
+    // Ограничиваем угол
+    if (currentAngle > maxAngle) {
+      currentAngle = maxAngle;
+    } else if (currentAngle < minAngle) {
+      currentAngle = minAngle;
+    }
+
+    // Пересчитываем скорости с ограниченным углом
+    const normalizedVelocityX = Math.sin(currentAngle) * (newVelocityX >= 0 ? 1 : -1);
+    const normalizedVelocityY = Math.cos(currentAngle) * (newVelocityY >= 0 ? 1 : -1);
+
+    // Применяем скорость с небольшим увеличением
+    const speedMultiplier = this.speed * 1.01; // Небольшое увеличение скорости
+
+    this.setVelocity(
+      normalizedVelocityX * speedMultiplier,
+      normalizedVelocityY * speedMultiplier
+    );
   }
 
   // Отскок от стены
