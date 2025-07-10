@@ -6,10 +6,18 @@
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/node_modules/.bin/vite",
-      "args": ["--host", "localhost", "--port", "3000"],
+      "args": [
+        "--host",
+        "localhost",
+        "--port",
+        "3000",
+        "--open"
+      ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "env": {
         "NODE_ENV": "development"
       },
@@ -23,10 +31,14 @@
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/node_modules/.bin/vite",
-      "args": ["build"],
+      "args": [
+        "build"
+      ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "env": {
         "NODE_ENV": "production"
       },
@@ -40,10 +52,17 @@
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/node_modules/.bin/vite",
-      "args": ["preview", "--port", "3000"],
+      "args": [
+        "preview",
+        "--port",
+        "3000",
+        "--open"
+      ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "env": {
         "NODE_ENV": "production"
       },
@@ -53,7 +72,33 @@
       }
     },
     {
-      "name": "🐛 Отладка в Chrome",
+      "name": "🐛 Отладка в браузере по умолчанию",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/vite",
+      "args": [
+        "--host",
+        "localhost",
+        "--port",
+        "3000",
+        "--open"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "NODE_ENV": "development",
+        "BROWSER": "default"
+      },
+      "presentation": {
+        "group": "🎮 Arcanoid",
+        "order": 4
+      }
+    },
+    {
+      "name": "🐛 Отладка в Chrome (если нужен именно Chrome)",
       "type": "chrome",
       "request": "launch",
       "url": "http://localhost:3000",
@@ -67,23 +112,34 @@
       ],
       "presentation": {
         "group": "🎮 Arcanoid",
-        "order": 4
+        "order": 5
       },
       "preLaunchTask": "npm: dev"
     }
   ],
   "compounds": [
     {
-      "name": "🎮 Запуск + Отладка",
+      "name": "🎮 Запуск в браузере по умолчанию",
       "configurations": [
-        "🎮 Запуск Arcanoid (Dev)",
-        "🐛 Отладка в Chrome"
+        "🐛 Отладка в браузере по умолчанию"
       ],
       "presentation": {
         "group": "🎮 Arcanoid",
         "order": 0
       },
       "stopAll": true
+    },
+    {
+      "name": "🎮 Запуск + Отладка в Chrome",
+      "configurations": [
+        "🎮 Запуск Arcanoid (Dev)",
+        "🐛 Отладка в Chrome (если нужен именно Chrome)"
+      ],
+      "presentation": {
+        "group": "🎮 Arcanoid",
+        "order": 1
+      },
+      "stopAll": true
     }
   ]
-} 
+}

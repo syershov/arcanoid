@@ -5,11 +5,20 @@
   "main": "src/main.js",
   "scripts": {
     "dev": "vite",
+    "dev:default": "BROWSER=default vite --open",
+    "dev:system": "vite --open",
     "build": "vite build",
     "preview": "vite preview",
+    "preview:open": "vite preview --port 3000 --open",
     "serve": "vite preview --port 3000"
   },
-  "keywords": ["arcanoid", "phaser", "game", "javascript", "breakout"],
+  "keywords": [
+    "arcanoid",
+    "phaser",
+    "game",
+    "javascript",
+    "breakout"
+  ],
   "author": "Developer",
   "license": "MIT",
   "dependencies": {
@@ -23,4 +32,4 @@
   "engines": {
     "node": ">=16.0.0"
   }
-} 
+}

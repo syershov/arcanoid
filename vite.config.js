@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import legacy from '@vitejs/plugin-legacy';
+import getBrowserConfig from './browser.config.js';
 
 export default defineConfig({
   plugins: [
@@ -9,7 +10,8 @@ export default defineConfig({
   ],
   server: {
     port: 3000,
-    open: true
+    open: getBrowserConfig(), // Использует браузер по умолчанию системы
+    host: 'localhost' // Явно указываем хост
   },
   build: {
     outDir: 'dist',
@@ -23,4 +25,4 @@ export default defineConfig({
     }
   },
   base: './'
-}); 
+});
