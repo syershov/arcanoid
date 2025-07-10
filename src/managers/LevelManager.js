@@ -14,25 +14,17 @@ export class LevelManager {
     this.currentLevel = levelNumber;
     this.currentLevelData = getLevel(levelNumber);
 
-    // Валидация уровня
-    if (!validateLevelPattern(this.currentLevelData.pattern)) {
-      console.error(`Невалидный паттерн уровня ${levelNumber}`);
+    if (!this.currentLevelData) {
       return false;
     }
 
     this.totalBricksInLevel = countBricksInLevel(this.currentLevelData.pattern);
-
-    console.log(`Загружен уровень ${levelNumber}: "${this.currentLevelData.name}"`);
-    console.log(`Описание: ${this.currentLevelData.description}`);
-    console.log(`Блоков в уровне: ${this.totalBricksInLevel}`);
-
     return true;
   }
 
   // Создание блоков по паттерну текущего уровня
   createBricks() {
     if (!this.currentLevelData) {
-      console.error('Уровень не загружен!');
       return [];
     }
 
@@ -40,41 +32,25 @@ export class LevelManager {
     const pattern = this.currentLevelData.pattern;
 
     for (let row = 0; row < pattern.length; row++) {
-      const rowPattern = pattern[row];
+      for (let col = 0; col < pattern[row].length; col++) {
+        const blockType = pattern[row][col];
 
-      for (let col = 0; col < rowPattern.length; col++) {
-        const blockType = rowPattern[col];
+        if (blockType === ' ') continue; // Пустое место
 
-        // Пропускаем пустые места
-        if (blockType === ' ' || !BLOCK_COLORS[blockType]) {
-          continue;
-        }
+        const blockConfig = BLOCK_COLORS[blockType];
+        if (!blockConfig) continue;
 
-        // Вычисляем позицию блока
         const x = LEVEL_SETTINGS.START_X + col * (LEVEL_SETTINGS.BRICK_WIDTH + LEVEL_SETTINGS.BRICK_SPACING);
         const y = LEVEL_SETTINGS.START_Y + row * (LEVEL_SETTINGS.BRICK_HEIGHT + LEVEL_SETTINGS.BRICK_SPACING);
 
-        // Получаем настройки блока
-        const blockConfig = BLOCK_COLORS[blockType];
-
-        // Создаем блок
-        const brick = new Brick(this.scene, x, y, blockConfig.color);
-
-        // Настраиваем свойства блока
-        brick.maxHits = blockConfig.hits;
-        brick.currentHits = 0;
-        brick.scoreValue = Math.floor(blockConfig.score * this.currentLevelData.scoreMultiplier);
+        const brick = new Brick(this.scene, x, y, blockConfig.color, blockConfig.hits);
         brick.blockType = blockType;
-        brick.blockName = blockConfig.name;
-
-        // Устанавливаем размеры
-        brick.setDisplaySize(LEVEL_SETTINGS.BRICK_WIDTH, LEVEL_SETTINGS.BRICK_HEIGHT);
+        brick.scoreValue = Math.round(blockConfig.score * this.currentLevelData.scoreMultiplier);
 
         bricks.push(brick);
       }
     }
 
-    console.log(`Создано ${bricks.length} блоков для уровня ${this.currentLevel}`);
     return bricks;
   }
 
@@ -111,7 +87,8 @@ export class LevelManager {
 
   // Проверка существования уровня
   levelExists(levelNumber) {
-    return LEVELS.hasOwnProperty(levelNumber);
+    const exists = !!LEVELS[levelNumber];
+    return exists;
   }
 
   // Получение списка всех доступных уровней
@@ -121,21 +98,12 @@ export class LevelManager {
 
   // Предварительный просмотр уровня (для отладки)
   previewLevel(levelNumber = null) {
-    const level = levelNumber ? getLevel(levelNumber) : this.currentLevelData;
-    if (!level) return;
+    const level = getLevel(levelNumber || this.currentLevel);
+    if (!level) {
+      return;
+    }
 
-    console.log(`\n=== ПРЕВЬЮ УРОВНЯ ${levelNumber || this.currentLevel} ===`);
-    console.log(`Название: ${level.name}`);
-    console.log(`Описание: ${level.description}`);
-    console.log(`Множитель очков: ${level.scoreMultiplier}`);
-    console.log('Паттерн:');
-
-    level.pattern.forEach((row, index) => {
-      console.log(`${index + 1}: "${row}"`);
-    });
-
-    console.log(`Всего блоков: ${countBricksInLevel(level.pattern)}`);
-    console.log('='.repeat(40));
+    // Можно добавить визуальный превью в будущем
   }
 
   // Сброс менеджера уровней

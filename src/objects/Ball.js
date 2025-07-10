@@ -149,14 +149,45 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  // Отскок от платформы
+  // Отскок от платформы (классическая логика Arcanoid)
   bounceOffPaddle(paddle) {
+    // Получаем угол отскока в зависимости от точки попадания
     const bounceAngle = paddle.getBounceAngle(this.x);
 
-    // Устанавливаем новую скорость
-    const velocityX = Math.sin(bounceAngle) * this.speed;
-    const velocityY = -Math.cos(bounceAngle) * this.speed;
+    // Получаем влияние скорости платформы
+    const paddleVelocity = paddle.getVelocityInfluence();
 
+    // Базовая скорость отскока
+    let velocityX = Math.sin(bounceAngle) * this.speed;
+    let velocityY = -Math.cos(bounceAngle) * this.speed;
+
+    // Добавляем влияние движения платформы (классическая механика)
+    // Скорость платформы влияет на горизонтальную составляющую
+    const paddleInfluence = 0.3; // Коэффициент влияния движения платформы
+    velocityX += paddleVelocity * paddleInfluence;
+
+    // Нормализуем скорость для сохранения исходной энергии
+    const targetSpeed = this.speed;
+    const currentSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+
+    if (currentSpeed > 0) {
+      const speedRatio = targetSpeed / currentSpeed;
+      velocityX *= speedRatio;
+      velocityY *= speedRatio;
+    }
+
+    // Ограничиваем минимальную вертикальную скорость
+    // Предотвращаем слишком пологие отскоки
+    const minVerticalSpeed = this.speed * 0.3; // 30% от общей скорости
+    if (Math.abs(velocityY) < minVerticalSpeed) {
+      velocityY = velocityY >= 0 ? minVerticalSpeed : -minVerticalSpeed;
+
+      // Пересчитываем горизонтальную скорость для сохранения общей скорости
+      const remainingSpeed = Math.sqrt(targetSpeed * targetSpeed - velocityY * velocityY);
+      velocityX = velocityX >= 0 ? remainingSpeed : -remainingSpeed;
+    }
+
+    // Устанавливаем новую скорость
     this.setVelocity(velocityX, velocityY);
 
     // Эффект отскока
@@ -176,7 +207,7 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
     });
   }
 
-  // Отскок от блока
+  // Отскок от блока (классическая логика Arcanoid)
   bounceOffBrick(brick) {
     // Эффект отскока
     this.setTint(0xff0000);
@@ -184,79 +215,97 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
       this.clearTint();
     });
 
+    if (!brick) return;
+
     // Получаем текущую скорость
     const currentVelocity = this.body.velocity;
+
+    // Позиции центров
+    const ballCenterX = this.x;
+    const ballCenterY = this.y;
+    const brickCenterX = brick.x;
+    const brickCenterY = brick.y;
+
+    // Размеры блока
+    const brickWidth = brick.width || 75;
+    const brickHeight = brick.height || 30;
+
+    // Вычисляем расстояния от центров
+    const deltaX = ballCenterX - brickCenterX;
+    const deltaY = ballCenterY - brickCenterY;
+
+    // Определяем сторону столкновения по классическим правилам
+    // Сравниваем отношения расстояний к размерам блока
+    const ratioX = Math.abs(deltaX) / (brickWidth / 2);
+    const ratioY = Math.abs(deltaY) / (brickHeight / 2);
+
     let newVelocityX = currentVelocity.x;
     let newVelocityY = currentVelocity.y;
 
-    if (brick) {
-      // Вычисляем относительную позицию попадания
-      const ballCenterX = this.x;
-      const ballCenterY = this.y;
-      const brickCenterX = brick.x;
-      const brickCenterY = brick.y;
+    if (ratioX > ratioY) {
+      // Столкновение с вертикальной стороной блока (левая или правая)
+      // Инвертируем горизонтальную составляющую скорости
+      newVelocityX = -currentVelocity.x;
+      // Вертикальная составляющая остается прежней
+      newVelocityY = currentVelocity.y;
+    } else {
+      // Столкновение с горизонтальной стороной блока (верхняя или нижняя)
+      // Инвертируем вертикальную составляющую скорости
+      newVelocityY = -currentVelocity.y;
+      // Горизонтальная составляющая остается прежней
+      newVelocityX = currentVelocity.x;
+    }
 
-      // Определяем сторону столкновения
-      const deltaX = ballCenterX - brickCenterX;
-      const deltaY = ballCenterY - brickCenterY;
+    // Добавляем минимальную случайность для предотвращения зацикливания
+    // Только небольшое отклонение (±2%)
+    const randomFactor = 0.02;
+    const randomMultiplierX = 1 + (Math.random() - 0.5) * randomFactor;
+    const randomMultiplierY = 1 + (Math.random() - 0.5) * randomFactor;
 
-      // Размеры блока (приблизительные)
-      const brickWidth = brick.width || 75;
-      const brickHeight = brick.height || 30;
+    newVelocityX *= randomMultiplierX;
+    newVelocityY *= randomMultiplierY;
 
-      // Определяем, с какой стороны произошло столкновение
-      const overlapX = Math.abs(deltaX) - brickWidth / 2;
-      const overlapY = Math.abs(deltaY) - brickHeight / 2;
+    // Нормализуем скорость для сохранения исходной энергии
+    const originalSpeed = Math.sqrt(currentVelocity.x * currentVelocity.x + currentVelocity.y * currentVelocity.y);
+    const newSpeed = Math.sqrt(newVelocityX * newVelocityX + newVelocityY * newVelocityY);
 
-      if (overlapX > overlapY) {
-        // Столкновение с боковой стороной блока
-        newVelocityX = -currentVelocity.x;
-        newVelocityY = currentVelocity.y;
+    if (newSpeed > 0) {
+      const speedRatio = originalSpeed / newSpeed;
+      newVelocityX *= speedRatio;
+      newVelocityY *= speedRatio;
+    }
 
-        // Добавляем небольшую случайность по Y для избежания зацикливания
-        const randomAngle = (Math.random() - 0.5) * 0.2; // ±0.1 радиан (±5.7 градусов)
-        newVelocityY = currentVelocity.y + Math.sin(randomAngle) * this.speed * 0.1;
+
+
+    // Проверяем, что скорость не нулевая
+    if (Math.abs(newVelocityX) < 30) {
+      newVelocityX = newVelocityX >= 0 ? 30 : -30;
+    }
+    if (Math.abs(newVelocityY) < 30) {
+      newVelocityY = newVelocityY >= 0 ? 30 : -30;
+    }
+
+    // Принудительно "выталкиваем" мяч из блока для предотвращения застревания
+    if (ratioX > ratioY) {
+      // Боковое столкновение - сдвигаем мяч по X
+      const pushDistance = 5;
+      if (deltaX > 0) {
+        this.x = brickCenterX + (brickWidth / 2) + pushDistance;
       } else {
-        // Столкновение с верхней или нижней стороной блока
-        newVelocityY = -currentVelocity.y;
-
-        // Добавляем случайность по X в зависимости от точки попадания
-        const hitPosition = deltaX / (brickWidth / 2); // от -1 до 1
-        let angleModification = hitPosition * 0.4; // максимум ±0.4 радиан (±22.9 градусов)
-
-        // Добавляем небольшую случайность
-        const randomFactor = (Math.random() - 0.5) * 0.15; // ±0.075 радиан
-        angleModification += randomFactor;
-
-        newVelocityX = currentVelocity.x + Math.sin(angleModification) * this.speed * 0.25;
+        this.x = brickCenterX - (brickWidth / 2) - pushDistance;
+      }
+    } else {
+      // Верхнее/нижнее столкновение - сдвигаем мяч по Y
+      const pushDistance = 5;
+      if (deltaY > 0) {
+        this.y = brickCenterY + (brickHeight / 2) + pushDistance;
+      } else {
+        this.y = brickCenterY - (brickHeight / 2) - pushDistance;
       }
     }
 
-    // Ограничиваем угол отскока до 60 градусов (≈1.047 радиан)
-    const maxAngle = Math.PI / 3; // 60 градусов
-    const minAngle = Math.PI / 6; // 30 градусов для минимального угла
-
-    // Вычисляем текущий угол
-    let currentAngle = Math.atan2(Math.abs(newVelocityX), Math.abs(newVelocityY));
-
-    // Ограничиваем угол
-    if (currentAngle > maxAngle) {
-      currentAngle = maxAngle;
-    } else if (currentAngle < minAngle) {
-      currentAngle = minAngle;
-    }
-
-    // Пересчитываем скорости с ограниченным углом
-    const normalizedVelocityX = Math.sin(currentAngle) * (newVelocityX >= 0 ? 1 : -1);
-    const normalizedVelocityY = Math.cos(currentAngle) * (newVelocityY >= 0 ? 1 : -1);
-
-    // Применяем скорость с небольшим увеличением
-    const speedMultiplier = this.speed * 1.01; // Небольшое увеличение скорости
-
-    this.setVelocity(
-      normalizedVelocityX * speedMultiplier,
-      normalizedVelocityY * speedMultiplier
-    );
+    // Применяем новую скорость
+    this.setVelocity(newVelocityX, newVelocityY);
   }
 
   // Отскок от стены

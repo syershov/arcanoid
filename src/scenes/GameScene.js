@@ -18,6 +18,7 @@ export class GameScene extends Phaser.Scene {
     this.gameStarted = false;
     this.ballLostProcessing = false;
     this.levelCompleteProcessing = false; // Защита от двойного завершения уровня
+    this.winCheckScheduled = false; // Защита от множественных проверок победы
 
     // Создаем менеджер уровней
     this.levelManager = new LevelManager(this);
@@ -45,6 +46,8 @@ export class GameScene extends Phaser.Scene {
 
     // Обновляем UI
     this.updateUI();
+
+
   }
 
   createBounds() {
@@ -92,7 +95,6 @@ export class GameScene extends Phaser.Scene {
 
     // Загружаем текущий уровень
     if (!this.levelManager.loadLevel(this.level)) {
-      console.error(`Не удалось загрузить уровень ${this.level}`);
       return;
     }
 
@@ -111,7 +113,6 @@ export class GameScene extends Phaser.Scene {
     const levelInfo = this.levelManager.getCurrentLevelInfo();
     if (levelInfo) {
       this.showMessage(`${levelInfo.name}`, 2000);
-      console.log(`Уровень ${levelInfo.number}: ${levelInfo.name} - ${levelInfo.description}`);
     }
 
     // Применяем множитель скорости для уровня
@@ -139,26 +140,33 @@ export class GameScene extends Phaser.Scene {
       paddle.onBallHit();
     });
 
-    // Столкновение мяча с блоками
-    this.ballBricksCollider = this.physics.add.collider(this.ball, this.bricks, (ball, brick) => {
+    // Столкновение мяча с блоками (используем overlap для полного контроля)
+    this.ballBricksCollider = this.physics.add.overlap(this.ball, this.bricks, (ball, brick) => {
       // Проверяем, что блок еще существует и не обрабатывается
       if (!brick.active || brick.isBeingDestroyed) {
         return;
       }
 
-      // Помечаем блок как обрабатываемый
-      brick.isBeingDestroyed = true;
+      // Защита от множественных срабатываний - увеличиваем время до 150мс
+      const currentTime = this.time.now;
+      if (brick.lastHitTime && (currentTime - brick.lastHitTime) < 150) {
+        return; // Игнорируем повторные удары
+      }
+      brick.lastHitTime = currentTime;
 
-      const destroyed = brick.hit();
+      // Сначала обрабатываем отскок мяча
       ball.bounceOffBrick(brick);
 
+      // Затем обрабатываем попадание по блоку
+      const destroyed = brick.hit();
+
       if (destroyed) {
+        // Добавляем очки
         this.score += brick.scoreValue;
         this.updateUI();
-        this.checkWinCondition();
-      } else {
-        // Если блок не разрушен, снимаем флаг
-        brick.isBeingDestroyed = false;
+
+        // Планируем проверку победы с задержкой для избежания множественных вызовов
+        this.scheduleWinCheck();
       }
     });
 
@@ -189,10 +197,9 @@ export class GameScene extends Phaser.Scene {
       this.onBallLost();
     });
 
-    // Событие уничтожения блока
+    // Событие уничтожения блока - очки начисляются в setupCollisions
     this.events.on('brick-destroyed', (score) => {
-      this.score += score;
-      this.updateUI();
+      // Можно добавить звуковые эффекты или другие реакции
     });
   }
 
@@ -263,6 +270,22 @@ export class GameScene extends Phaser.Scene {
     this.ball.reset(this.paddle.x, this.paddle.y - 30);
   }
 
+  // Планирование проверки победы с защитой от множественных вызовов
+  scheduleWinCheck() {
+    // Если проверка уже запланирована, не планируем новую
+    if (this.winCheckScheduled) {
+      return;
+    }
+
+    this.winCheckScheduled = true;
+
+    // Планируем проверку с задержкой для обработки всех одновременных разрушений
+    this.time.delayedCall(100, () => {
+      this.winCheckScheduled = false;
+      this.checkWinCondition();
+    });
+  }
+
   checkWinCondition() {
     // Защита от множественных вызовов
     if (this.levelCompleteProcessing) {
@@ -270,12 +293,45 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Проверяем с небольшой задержкой, чтобы все блоки успели обновиться
-    this.time.delayedCall(10, () => {
+    this.time.delayedCall(50, () => {
       if (this.levelCompleteProcessing || !this.bricks) {
         return;
       }
 
-      if (this.bricks.children.entries.length === 0) {
+      // Дополнительная проверка на активные блоки
+      const allBricks = this.bricks.children.entries;
+      let activeBricks = allBricks.filter(brick => brick.active);
+      const destroyedBricks = allBricks.filter(brick => !brick.active);
+
+      // ИСПРАВЛЕНИЕ: Проверяем блоки, которые "улетели" за пределы экрана
+      const validActiveBricks = [];
+      activeBricks.forEach(brick => {
+        // Проверяем, что блок находится в разумных пределах экрана
+        const isInBounds = brick.y > -100 && brick.y < 700 && brick.x > -100 && brick.x < 900;
+
+        if (!isInBounds) {
+          // Принудительно деактивируем блок, который "улетел"
+          brick.setActive(false);
+          brick.setVisible(false);
+          if (brick.body) {
+            brick.body.enable = false;
+          }
+        } else {
+          validActiveBricks.push(brick);
+        }
+      });
+
+      // Обновляем список активных блоков
+      activeBricks = validActiveBricks;
+
+      // Детальная диагностика оставшихся блоков - убираем в продакшене
+      // if (activeBricks.length > 0) {
+      //   activeBricks.forEach((brick, index) => {
+      //     // диагностика удалена
+      //   });
+      // }
+
+      if (activeBricks.length === 0) {
         this.levelCompleteProcessing = true;
         this.levelComplete();
       }
@@ -294,11 +350,18 @@ export class GameScene extends Phaser.Scene {
 
     // Создаем новые блоки
     this.time.delayedCall(3000, () => {
+      // Проверяем, существует ли следующий уровень
+      if (!this.levelManager.levelExists(this.level)) {
+        this.showVictory();
+        return;
+      }
+
       this.createBricks();
       this.resetBall();
       this.gameStarted = false;
       this.ballLostProcessing = false; // Сбрасываем флаг
       this.levelCompleteProcessing = false; // Сбрасываем флаг завершения уровня
+      this.winCheckScheduled = false; // Сбрасываем флаг проверки победы
       this.updateUI();
     });
   }
@@ -309,6 +372,18 @@ export class GameScene extends Phaser.Scene {
 
     // После показа сообщения делаем фейд и переходим в главное меню
     this.time.delayedCall(2000, () => {
+      this.fadeToMenu();
+    });
+  }
+
+  // Показ экрана победы при завершении всех уровней
+  showVictory() {
+    this.gameStarted = false;
+
+    this.showMessage(`Поздравляем! Все уровни пройдены!\nИтоговый счет: ${this.score}`, 4000);
+
+    // После показа сообщения переходим в главное меню
+    this.time.delayedCall(4000, () => {
       this.fadeToMenu();
     });
   }
@@ -378,6 +453,8 @@ export class GameScene extends Phaser.Scene {
     // Сбрасываем состояние
     this.gameStarted = false;
     this.ballLostProcessing = false;
+    this.levelCompleteProcessing = false;
+    this.winCheckScheduled = false;
   }
 
   showMessage(text, duration = 2000) {
@@ -496,6 +573,7 @@ export class GameScene extends Phaser.Scene {
     this.gameStarted = false;
     this.ballLostProcessing = false;
     this.levelCompleteProcessing = false;
+    this.winCheckScheduled = false;
 
     // Очищаем все объекты сцены
     this.children.removeAll(true);

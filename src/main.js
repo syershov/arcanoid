@@ -111,12 +111,14 @@ class ArcanoidApp {
     this.hideMenu();
 
     // Останавливаем сцену меню
-    if (this.game.scene.getScene('MenuScene')) {
+    const menuScene = this.game.scene.getScene('MenuScene');
+    if (menuScene && menuScene.scene.isActive()) {
       this.game.scene.stop('MenuScene');
     }
 
     // Возобновляем игровую сцену
-    if (this.game.scene.getScene('GameScene')) {
+    const gameScene = this.game.scene.getScene('GameScene');
+    if (gameScene && gameScene.scene.isPaused()) {
       this.game.scene.resume('GameScene');
     }
   }
@@ -136,14 +138,16 @@ class ArcanoidApp {
     this.elements.startButton.style.display = 'none';
     this.elements.resumeButton.style.display = 'block';
 
-    // Приостанавливаем игровую сцену
-    if (this.game.scene.getScene('GameScene')) {
+    // Приостанавливаем игровую сцену с проверками
+    const gameScene = this.game.scene.getScene('GameScene');
+    if (gameScene && gameScene.scene.isActive() && !gameScene.scene.isPaused()) {
       this.game.scene.pause('GameScene');
     }
 
     // Запускаем сцену меню поверх игры
-    if (this.game.scene.getScene('MenuScene')) {
-      this.game.scene.launch('MenuScene');
+    const menuScene = this.game.scene.getScene('MenuScene');
+    if (menuScene && !menuScene.scene.isActive()) {
+      this.game.scene.start('MenuScene');
     }
 
     this.showMenu();

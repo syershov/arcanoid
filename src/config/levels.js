@@ -6,16 +6,14 @@ export const LEVELS = {
     name: "Начальный уровень",
     description: "Простая схема для знакомства с игрой",
     pattern: [
-      // "   RRR   ",
-      "   O  ",
+      "RRRRRRRRR",
+      "OOOOOOOOO",
+      "YYYYYYYYY",
+      "GGGGGGGGG",
+      "BBBBBBBBB",
+      "PPPPPPPPP",
+      "CCCCCCCCC"
     ],
-    // pattern: [
-    //   "RRRRRRRRR",
-    //   "OOOOOOOOO",
-    //   "YYYYYYYYY",
-    //   "GGGGGGGGG",
-    //   "BBBBBBBBB"
-    // ],
     scoreMultiplier: 1.0
   },
 

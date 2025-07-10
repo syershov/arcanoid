@@ -13,12 +13,23 @@ export class Brick extends Phaser.Physics.Arcade.Sprite {
     this.setImmovable(true);
     this.body.setSize(GAME_SETTINGS.BRICK_WIDTH, GAME_SETTINGS.BRICK_HEIGHT);
 
+    // ИСПРАВЛЕНИЕ: Дополнительная защита от перемещения блоков
+    this.body.moves = false; // Блок вообще не может двигаться
+    this.body.setVelocity(0, 0); // Убираем любую скорость
+    this.body.setAcceleration(0, 0); // Убираем любое ускорение
+
     // Свойства блока
     this.maxHits = hits;
     this.currentHits = 0; // Исправлено: начинаем с 0 попаданий
     this.baseColor = color;
     this.scoreValue = GAME_SETTINGS.BRICK_SCORE * hits;
     this.isBeingDestroyed = false; // Флаг для предотвращения двойной обработки
+
+    // Принудительно устанавливаем активность
+    this.setActive(true);
+    this.setVisible(true);
+
+
 
     // Устанавливаем цвет
     this.setTint(color);
@@ -29,12 +40,27 @@ export class Brick extends Phaser.Physics.Arcade.Sprite {
 
   // Попадание по блоку
   hit() {
+    // Дополнительная проверка на то, что блок еще активен
+    if (!this.active) {
+      return false;
+    }
+
+    if (this.isBeingDestroyed) {
+      return false;
+    }
+
+    // Увеличиваем счетчик попаданий
     this.currentHits++;
 
-    // Эффект попадания
-    this.onHit();
+    // Эффект попадания (только если не слишком много анимаций)
+    const activeAnimations = this.scene.tweens.getTweens().length;
+    if (activeAnimations <= 15) {
+      this.onHit();
+    }
 
     if (this.currentHits >= this.maxHits) {
+      // Помечаем блок как разрушаемый только перед уничтожением
+      this.isBeingDestroyed = true;
       this.destroy();
       return true; // Блок уничтожен
     } else {
@@ -93,28 +119,33 @@ export class Brick extends Phaser.Physics.Arcade.Sprite {
 
   // Добавление эффекта трещин
   addCrackEffect() {
-    // Создаем эффект трещин только один раз
-    if (this.hasCracks) return;
+    // Проверяем, что блок еще существует и активен
+    if (this.hasCracks || !this.scene || !this.active) return;
     this.hasCracks = true;
 
     // Создаем несколько линий-трещин
     const crackCount = 2 + Math.floor(Math.random() * 2); // 2-3 трещины
 
     for (let i = 0; i < crackCount; i++) {
-      const crack = this.scene.add.line(
-        this.x, this.y,
-        Phaser.Math.Between(-this.width / 2, this.width / 2),
-        Phaser.Math.Between(-this.height / 2, this.height / 2),
-        Phaser.Math.Between(-this.width / 2, this.width / 2),
-        Phaser.Math.Between(-this.height / 2, this.height / 2),
-        0x000000,
-        0.6
-      );
-      crack.setLineWidth(1);
+      try {
+        const crack = this.scene.add.line(
+          this.x, this.y,
+          Phaser.Math.Between(-this.width / 2, this.width / 2),
+          Phaser.Math.Between(-this.height / 2, this.height / 2),
+          Phaser.Math.Between(-this.width / 2, this.width / 2),
+          Phaser.Math.Between(-this.height / 2, this.height / 2),
+          0x000000,
+          0.6
+        );
+        crack.setLineWidth(1);
 
-      // Сохраняем ссылку для удаления
-      if (!this.cracks) this.cracks = [];
-      this.cracks.push(crack);
+        // Сохраняем ссылку для удаления
+        if (!this.cracks) this.cracks = [];
+        this.cracks.push(crack);
+      } catch (error) {
+        // Игнорируем ошибки создания трещин
+        break;
+      }
     }
   }
 
@@ -123,34 +154,40 @@ export class Brick extends Phaser.Physics.Arcade.Sprite {
     // Эффект будет создан при уничтожении
   }
 
-  // Создание частиц при попадании
+  // Создание частиц при попадании (упрощенный)
   createHitParticles() {
-    const particles = [];
-    const particleCount = 5;
+    // Проверяем количество активных анимаций в сцене для предотвращения перегрузки
+    const activeAnimations = this.scene.tweens.getTweens().length;
+    if (activeAnimations > 20) {
+      // Если слишком много анимаций, пропускаем создание частиц
+      return;
+    }
+
+    const particleCount = 2; // Еще больше уменьшаем количество частиц
 
     for (let i = 0; i < particleCount; i++) {
       const particle = this.scene.add.rectangle(
-        this.x + Phaser.Math.Between(-20, 20),
-        this.y + Phaser.Math.Between(-10, 10),
-        4,
-        4,
+        this.x + Phaser.Math.Between(-10, 10),
+        this.y + Phaser.Math.Between(-5, 5),
+        2,
+        2,
         this.baseColor
       );
 
-      particles.push(particle);
-
-      // Анимация частицы
+      // Анимация частицы с еще меньшей продолжительностью
       this.scene.tweens.add({
         targets: particle,
-        x: particle.x + Phaser.Math.Between(-50, 50),
-        y: particle.y + Phaser.Math.Between(-50, 50),
+        x: particle.x + Phaser.Math.Between(-20, 20),
+        y: particle.y + Phaser.Math.Between(-20, 20),
         alpha: 0,
         scaleX: 0,
         scaleY: 0,
-        duration: 500,
+        duration: 200,
         ease: 'Power2',
         onComplete: () => {
-          particle.destroy();
+          if (particle && particle.destroy) {
+            particle.destroy();
+          }
         }
       });
     }
@@ -158,6 +195,7 @@ export class Brick extends Phaser.Physics.Arcade.Sprite {
 
   // Переопределяем метод destroy для добавления эффектов
   destroy() {
+
     // Удаляем трещины
     if (this.cracks) {
       this.cracks.forEach(crack => crack.destroy());
@@ -174,29 +212,35 @@ export class Brick extends Phaser.Physics.Arcade.Sprite {
     super.destroy();
   }
 
-  // Эффект взрыва
+  // Эффект взрыва (упрощенный для предотвращения зависания)
   createExplosionEffect() {
-    const particles = [];
-    const particleCount = 10;
+    // Проверяем количество активных анимаций в сцене для предотвращения перегрузки
+    const activeAnimations = this.scene.tweens.getTweens().length;
+    if (activeAnimations > 30) {
+      // Если слишком много анимаций, создаем только простую вспышку
+      this.createSimpleFlash();
+      return;
+    }
+
+    // Уменьшаем количество частиц для стабильности
+    const particleCount = 3;
 
     for (let i = 0; i < particleCount; i++) {
       const particle = this.scene.add.rectangle(
         this.x,
         this.y,
-        6,
-        6,
+        3,
+        3,
         this.baseColor
       );
 
-      particles.push(particle);
-
       // Случайное направление
       const angle = (i / particleCount) * Math.PI * 2;
-      const speed = Phaser.Math.Between(50, 150);
+      const speed = Phaser.Math.Between(20, 60);
       const targetX = this.x + Math.cos(angle) * speed;
       const targetY = this.y + Math.sin(angle) * speed;
 
-      // Анимация взрыва
+      // Анимация взрыва с меньшей продолжительностью
       this.scene.tweens.add({
         targets: particle,
         x: targetX,
@@ -204,25 +248,34 @@ export class Brick extends Phaser.Physics.Arcade.Sprite {
         alpha: 0,
         scaleX: 0,
         scaleY: 0,
-        duration: 800,
+        duration: 300,
         ease: 'Power2',
         onComplete: () => {
-          particle.destroy();
+          if (particle && particle.destroy) {
+            particle.destroy();
+          }
         }
       });
     }
 
-    // Эффект вспышки
-    const flash = this.scene.add.circle(this.x, this.y, 30, 0xffffff, 0.8);
+    // Создаем простую вспышку
+    this.createSimpleFlash();
+  }
+
+  // Простая вспышка без сложных анимаций
+  createSimpleFlash() {
+    const flash = this.scene.add.circle(this.x, this.y, 15, 0xffffff, 0.5);
     this.scene.tweens.add({
       targets: flash,
-      scaleX: 2,
-      scaleY: 2,
+      scaleX: 1.2,
+      scaleY: 1.2,
       alpha: 0,
-      duration: 300,
+      duration: 150,
       ease: 'Power2',
       onComplete: () => {
-        flash.destroy();
+        if (flash && flash.destroy) {
+          flash.destroy();
+        }
       }
     });
   }
