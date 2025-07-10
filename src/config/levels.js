@@ -6,8 +6,8 @@ export const LEVELS = {
     name: "Начальный уровень",
     description: "Простая схема для знакомства с игрой",
     pattern: [
-      "   RRR   ",
-      "   OOOO  ",
+      // "   RRR   ",
+      "   O  ",
     ],
     // pattern: [
     //   "RRRRRRRRR",

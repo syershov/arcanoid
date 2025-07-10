@@ -81,7 +81,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   createBricks() {
-    // Создаем группу блоков
+    // Очищаем существующие блоки если они есть
+    if (this.bricks) {
+      this.bricks.clear(true, true);
+      this.bricks.destroy();
+    }
+
+    // Создаем новую группу блоков
     this.bricks = this.physics.add.group();
 
     // Загружаем текущий уровень
@@ -98,6 +104,9 @@ export class GameScene extends Phaser.Scene {
       this.bricks.add(brick);
     });
 
+    // Пересоздаем коллайдеры для новых блоков
+    this.setupCollisions();
+
     // Показываем информацию об уровне
     const levelInfo = this.levelManager.getCurrentLevelInfo();
     if (levelInfo) {
@@ -113,14 +122,25 @@ export class GameScene extends Phaser.Scene {
   }
 
   setupCollisions() {
+    // Удаляем существующие коллайдеры если они есть
+    if (this.ballPaddleCollider) {
+      this.ballPaddleCollider.destroy();
+    }
+    if (this.ballBricksCollider) {
+      this.ballBricksCollider.destroy();
+    }
+    if (this.ballBoundsCollider) {
+      this.ballBoundsCollider.destroy();
+    }
+
     // Столкновение мяча с платформой
-    this.physics.add.collider(this.ball, this.paddle, (ball, paddle) => {
+    this.ballPaddleCollider = this.physics.add.collider(this.ball, this.paddle, (ball, paddle) => {
       ball.bounceOffPaddle(paddle);
       paddle.onBallHit();
     });
 
     // Столкновение мяча с блоками
-    this.physics.add.collider(this.ball, this.bricks, (ball, brick) => {
+    this.ballBricksCollider = this.physics.add.collider(this.ball, this.bricks, (ball, brick) => {
       // Проверяем, что блок еще существует и не обрабатывается
       if (!brick.active || brick.isBeingDestroyed) {
         return;
@@ -143,7 +163,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     // Столкновение мяча со стенами (только верхняя и боковые)
-    this.physics.add.collider(this.ball, this.bounds, (ball, wall) => {
+    this.ballBoundsCollider = this.physics.add.collider(this.ball, this.bounds, (ball, wall) => {
       ball.bounceOffWall();
     });
   }
@@ -433,6 +453,20 @@ export class GameScene extends Phaser.Scene {
 
     // Останавливаем все анимации
     this.tweens.killAll();
+
+    // Удаляем коллайдеры
+    if (this.ballPaddleCollider) {
+      this.ballPaddleCollider.destroy();
+      this.ballPaddleCollider = null;
+    }
+    if (this.ballBricksCollider) {
+      this.ballBricksCollider.destroy();
+      this.ballBricksCollider = null;
+    }
+    if (this.ballBoundsCollider) {
+      this.ballBoundsCollider.destroy();
+      this.ballBoundsCollider = null;
+    }
 
     // Очищаем группы объектов
     if (this.bricks) {
