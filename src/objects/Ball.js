@@ -19,12 +19,8 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
     this.isLost = false;
     this.speed = GAME_SETTINGS.BALL_SPEED;
 
-    // Эффекты
-    this.trailParticles = [];
+    // Эффекты следа
     this.createTrailEffect();
-
-    // Звуковые эффекты (заглушки)
-    this.bounceSound = null;
   }
 
   // Запуск мяча
@@ -235,9 +231,6 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
         newVelocityX = currentVelocity.x + Math.sin(angleModification) * this.speed * 0.25;
       }
     }
-
-    // Нормализуем скорость
-    const newSpeed = Math.sqrt(newVelocityX * newVelocityX + newVelocityY * newVelocityY);
 
     // Ограничиваем угол отскока до 60 градусов (≈1.047 радиан)
     const maxAngle = Math.PI / 3; // 60 градусов

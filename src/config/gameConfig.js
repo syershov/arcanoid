@@ -2,8 +2,6 @@ import Phaser from 'phaser';
 import { PreloadScene } from '../scenes/PreloadScene.js';
 import { MenuScene } from '../scenes/MenuScene.js';
 import { GameScene } from '../scenes/GameScene.js';
-import { GameOverScene } from '../scenes/GameOverScene.js';
-import { PauseScene } from '../scenes/PauseScene.js';
 
 export const GAME_CONFIG = {
   type: Phaser.AUTO,
@@ -21,9 +19,7 @@ export const GAME_CONFIG = {
   scene: [
     PreloadScene,
     MenuScene,
-    GameScene,
-    GameOverScene,
-    PauseScene
+    GameScene
   ],
   scale: {
     mode: Phaser.Scale.FIT,
@@ -50,22 +46,22 @@ export const GAME_SETTINGS = {
   BALL_SIZE: 16,
   BRICK_WIDTH: 75,
   BRICK_HEIGHT: 30,
-  
+
   // Скорости
   PADDLE_SPEED: 350,
   BALL_SPEED: 300,
-  
+
   // Игровые параметры
   INITIAL_LIVES: 3,
   ROWS_OF_BRICKS: 5,
   BRICKS_PER_ROW: 10,
   BRICK_PADDING: 5,
   BRICK_OFFSET_TOP: 100,
-  
+
   // Очки
   BRICK_SCORE: 10,
   BONUS_SCORE: 50,
-  
+
   // Цвета блоков
   BRICK_COLORS: [
     0xff6b6b, // Красный
@@ -77,4 +73,4 @@ export const GAME_SETTINGS = {
     0x54a0ff, // Голубой
     0x5f27cd, // Фиолетовый
   ]
-}; 
+};

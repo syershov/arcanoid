@@ -80,17 +80,18 @@ npm run preview
 arcanoid/
 ├── src/
 │   ├── config/
-│   │   └── gameConfig.js      # Конфигурация игры и настройки
+│   │   ├── gameConfig.js      # Конфигурация игры и настройки
+│   │   └── levels.js          # Конфигурация уровней
 │   ├── scenes/
 │   │   ├── PreloadScene.js    # Сцена предзагрузки
 │   │   ├── MenuScene.js       # Главное меню
-│   │   ├── GameScene.js       # Основная игровая сцена
-│   │   ├── GameOverScene.js   # Экран окончания игры
-│   │   └── PauseScene.js      # Сцена паузы
+│   │   └── GameScene.js       # Основная игровая сцена
 │   ├── objects/
 │   │   ├── Paddle.js          # Класс платформы
 │   │   ├── Ball.js            # Класс мяча
 │   │   └── Brick.js           # Класс блока
+│   ├── managers/
+│   │   └── LevelManager.js    # Менеджер уровней
 │   └── main.js                # Точка входа приложения
 ├── index.html                 # HTML страница
 ├── package.json              # Зависимости проекта
@@ -163,7 +164,7 @@ export class SpecialBrick extends Brick {
     super(scene, x, y, color, hits);
     this.specialType = specialType;
   }
-  
+
   // Переопределите методы для особого поведения
 }
 ```
@@ -190,4 +191,4 @@ MIT License
 
 ---
 
-*Наслаждайтесь игрой! 🎮* 
+*Наслаждайтесь игрой! 🎮*
