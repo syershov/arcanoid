@@ -3,14 +3,19 @@
   "version": "1.0.0",
   "description": "Классическая игра Arcanoid на базе фреймворка Phaser",
   "main": "src/main.js",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "dev:default": "BROWSER=default vite --open",
     "dev:system": "vite --open",
+    "dev:safe": "node scripts/safe-start.js",
     "build": "vite build",
     "preview": "vite preview",
     "preview:open": "vite preview --port 3000 --open",
-    "serve": "vite preview --port 3000"
+    "serve": "vite preview --port 3000",
+    "status": "node scripts/check-status.js",
+    "stop": "pkill -f vite",
+    "restart": "npm run stop && sleep 2 && npm run dev:system"
   },
   "keywords": [
     "arcanoid",
