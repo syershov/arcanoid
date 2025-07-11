@@ -1,0 +1,77 @@
+# Зависимости
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Сборка
+dist
+build
+.next
+out
+
+# Локальные файлы окружения
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Логи
+logs
+*.log
+
+# Кэш
+.cache
+.parcel-cache
+
+# Временные файлы
+*.tmp
+*.temp
+.tmp
+.temp
+
+# IDE файлы
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS файлы
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Документация
+*.md
+!README.md
+
+# Тестирование
+coverage
+.nyc_output
+.jest
+
+# Memory Bank (не нужен в продакшене)
+memory_bank
+
+# Скрипты разработки
+scripts/check-status.js
+scripts/safe-start.js
+
+# Конфигурация браузера (не нужна в контейнере)
+browser.config.js
+BROWSER_SETUP.md

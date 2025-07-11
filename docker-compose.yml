@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  arcanoid:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: arcanoid-game
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.arcanoid.rule=PathPrefix(`/`)"
+      - "traefik.http.services.arcanoid.loadbalancer.server.port=8080"
+    networks:
+      - arcanoid-network
+
+networks:
+  arcanoid-network:
+    driver: bridge
