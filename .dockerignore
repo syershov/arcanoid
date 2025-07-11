@@ -72,6 +72,5 @@ memory_bank
 scripts/check-status.js
 scripts/safe-start.js
 
-# Конфигурация браузера (не нужна в контейнере)
-browser.config.js
+# Документация браузера (не нужна в контейнере)
 BROWSER_SETUP.md

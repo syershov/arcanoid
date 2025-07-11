@@ -10,7 +10,7 @@ export default defineConfig({
   ],
   server: {
     port: 3000,
-    open: getBrowserConfig(), // Использует браузер по умолчанию системы
+    open: process.env.NODE_ENV === 'production' ? false : getBrowserConfig(), // Не открывать браузер в продакшене
     host: 'localhost' // Явно указываем хост
   },
   build: {
